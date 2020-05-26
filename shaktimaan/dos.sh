@@ -26,14 +26,18 @@ do
 	if [ ${ip_array[$i]} != `hostname -I | awk '{print $1}'` ]
 	then
 		echo ${ip_array[$i]}
-		sudo timeout 10 tshark -i wlan0 -Y "ip.src == `hostname -I | awk '{print $1}'` && ip.dst == ${ip_array[$i]}" >> /etc/shaktiman/logs/DOS	
-		grep -a SYN log1
-		if [ $? -eq 0 ]
+		sudo timeout 6 tshark -i wlan0 -Y "ip.src == `hostname -I | awk '{print $1}'` && ip.dst == ${ip_array[$i]}" >> /etc/shaktiman/logs/DOS.txt	
+		total_packets = `wc DOS.txt | awk -F" " '{print $1}'
+		if [ $total_packets > 16000 ]
 		then
-			echo ${ip_array[$i]}  "Is the attacker will block this "
-			sudo iptables -A INPUT -s ${ip_array[$i]} -j DROP
-		else
-			echo "You are safe and sound"
-		fi
+			grep -q "Win=64 Len=120" DOS.txt
+			if [ $? -eq 0 ]
+			then
+				echo ${ip_array[$i]}  "Is the attacker will block this "
+				sudo iptables -A INPUT -s ${ip_array[$i]} -j DROP
+			else
+				echo "You are safe and sound"
+			fi
+		fi	
 	fi
 done
